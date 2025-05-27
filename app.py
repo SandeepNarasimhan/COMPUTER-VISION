@@ -6,7 +6,6 @@ from streamlit_option_menu import option_menu
 import plotly.graph_objects as go
 import time
 import io
-import cv2
 from tensorflow.keras.utils import plot_model
 import os
 import matplotlib.pyplot as plt
