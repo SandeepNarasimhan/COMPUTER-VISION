@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2
+#import cv2
 from PIL import Image
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
