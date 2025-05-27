@@ -10,8 +10,10 @@ from tensorflow.keras.utils import plot_model
 import os
 import matplotlib.pyplot as plt
 from utils.grad import make_gradcam_heatmap, superimpose_heatmap, save_and_display_gradcam
+from PIL import Image
+from utils.generate_report import generate_pdf_report
 
-
+ 
 MODEL_PATH = 'brain_tumor_classification.h5'
 CLASS_NAMES = ['glioma', 'meningioma', 'no_tumor', 'pituitary']
 IMG_SIZE = (128, 128)
@@ -79,8 +81,8 @@ model.load_weights('brain_tumor_classification.h5')
 
 with st.sidebar:
     selected = option_menu(
-        "Navigation", ["Home", "Model Info"],
-        icons=['house', 'info-circle'],
+        "Navigation", ["Home", "Predict Tumour", "Model Info"],
+        icons=['house', None,'info-circle'],
         menu_icon="cast",
         default_index=0
     )
@@ -94,16 +96,42 @@ with st.sidebar:
     """)
 
 if selected == "Home":
-    st.title("Brain Tumor Classifier")
-    st.markdown("""
-    Upload a brain MRI image (JPG/PNG), and this app will classify the type of brain tumor detected.
-    """)
+    st.markdown("**Overview:**")
+
+    st.write("This application is an AI-powered tool designed to assist in the detection and classification of brain tumors from MRI images. Built using a convolutional neural network (CNN) model and deployed via Streamlit, the app provides an intuitive interface for uploading grayscale MRI scans and receiving a classification output.")
+
+    st.markdown("**Key Features:**")
+
+    """
+        📤 Upload MRI Image: Easily upload a grayscale MRI scan of the brain.
+
+        🧠 Tumor Classification: The model predicts the type or presence of a brain tumor using a trained deep learning model.
+
+        📊 Prediction Confidence: Displays the probability/confidence associated with each prediction class.
+
+        🔍 Model Explainability (Optional): Visual explanation using **Grad-CAM** to highlight the region influencing the model’s decision (if implemented).
+
+        📄 Downloadable PDF Report: Automatically generates a professional prediction report with:
+
+            Upload date and time
+            Predicted tumor type
+            Class probability
+            Uploaded MRI image
+            Grad-CAM visualization
+
+    """
 
     st.info("""Grad-CAM (Gradient-weighted Class Activation Mapping) is a technique that helps us 
     understand where the model is "looking" in an image when making a prediction. 
     It highlights the most important areas of the brain MRI that influenced the model’s decision, 
     using a heatmap overlay. This helps doctors, researchers, and users see which regions the model 
     considers suspicious or relevant for detecting tumors.""")
+
+elif selected == "Predict Tumour":
+    st.title("Brain Tumor Classifier")
+    st.markdown("""
+    Upload a brain MRI image (JPG/PNG), and this app will classify the type of brain tumor detected.
+    """)
 
     uploaded_file = st.file_uploader("Choose an MRI image...", type=["jpg", "jpeg", "png"])
 
@@ -136,6 +164,16 @@ if selected == "Home":
                 st.success(f"🧾 **Prediction:** {predicted_class}")
                 st.info(f"📊 **Confidence:** {confidence:.2f}%")
 
+                pdf_path = generate_pdf_report(predicted_class, confidence, image, gradcam_img)
+
+                with open(pdf_path, "rb") as f:
+                    st.download_button(
+                        label="📄 Download Report",
+                        data=f,
+                        file_name="brain_tumor_report.pdf",
+                        mime="application/pdf"
+                    )
+
                 # probability bar chart
                 fig = go.Figure([go.Bar(
                     x=CLASS_NAMES,
@@ -149,6 +187,7 @@ if selected == "Home":
                                   yaxis_title="Probability",
                                   template="plotly_dark")
                 st.plotly_chart(fig)
+
 
 elif selected == "Model Info":
     st.header("📈 Model Performance")
